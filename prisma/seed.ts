@@ -6,17 +6,16 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Memulai proses seeding...');
 
-  // 1. Password Hash
   const hashedPassword = await hash('password123', 10);
   
-  // 2. Bersihkan Data Lama
+
   await prisma.invoiceItem.deleteMany();
   await prisma.invoice.deleteMany();
   await prisma.customer.deleteMany();
   await prisma.businessProfile.deleteMany();
   await prisma.user.deleteMany();
 
-  // 3. Buat User
+
   const user = await prisma.user.create({
     data: {
       email: 'dev@saas.com',
@@ -33,7 +32,6 @@ async function main() {
 
   console.log('User created:', user.email);
 
-  // 4. Buat Customer
   const customer = await prisma.customer.create({
     data: {
       userId: user.id,
@@ -43,7 +41,6 @@ async function main() {
     }
   });
 
-  // 5. Buat Invoice
   await prisma.invoice.create({
     data: {
       userId: user.id,
