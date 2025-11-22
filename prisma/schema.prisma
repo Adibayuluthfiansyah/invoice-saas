@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_DIRECT_URL")
+}
+
+// 1. Model User (Pemilik akun SaaS)
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  createdAt DateTime @default(now())
+
+  // Relasi: Satu User punya satu profil bisnis & banyak customer/invoice
+  businessProfile BusinessProfile?
+  customers       Customer[]
+  invoices        Invoice[]
+}
+
+// Model BusinessProfile (Data untuk Kop Surat/Header Invoice)
+model BusinessProfile {
+  id          String  @id @default(cuid())
+  companyName String
+  address     String?
+  logoUrl     String? // URL logo di S3/Cloudinary
+  taxId       String? // NPWP 
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+//  Model Customer (Klien yang ditagih)
+model Customer {
+  id      String  @id @default(cuid())
+  name    String
+  email   String
+  address String?
+
+  // Customer ke User ID.
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  invoices Invoice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Model Invoice (Dokumen Tagihan)
+model Invoice {
+  id            String   @id @default(cuid())
+  invoiceNumber String
+  issueDate     DateTime @default(now())
+  dueDate       DateTime
+
+  // Jangan pakai string "lunas"/"belum", tapi pakai ENUM strict.
+  status InvoiceStatus @default(DRAFT)
+
+  subTotal    Int   @default(0) // Total sebelum pajak
+  taxRate     Float @default(0) // Persentase pajak (misal 11.0)
+  taxAmount   Int   @default(0) // Nilai pajak dalam Rupiah
+  totalAmount Int   @default(0) // Grand Total (Subtotal + Tax)
+
+  pdfUrl String?
+
+  // Relasi
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+
+  items InvoiceItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+//  Model InvoiceItem (Baris Barang/Jasa)
+model InvoiceItem {
+  id          String @id @default(cuid())
+  description String
+  quantity    Int    @default(1)
+  unitPrice   Int // Harga per satuan
+
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+// Definisi Status (State Machine)
+enum InvoiceStatus {
+  DRAFT // Masih diedit, belum dikirim
+  PENDING // Sudah dikirim ke klien, belum dibayar
+  PAID // Sudah dibayar
+  OVERDUE // Telat bayar
+  VOID // Dibatalkan
+}
