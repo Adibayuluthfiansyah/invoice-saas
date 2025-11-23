@@ -1,5 +1,7 @@
 "use server"
-import { prisma } from "@/app/lib/prisma";
+
+
+import { prisma } from "@/lib/prisma";
 
 export async function getCustomers(userEmail:string) {
     try {

@@ -1,5 +1,5 @@
-import React from "react";
-import Image from "next/image";
+"use client";
+
 import Link from "next/link";
 import {
   Card,
@@ -8,56 +8,53 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { login } from "@/app/actions/auth/login";
-import { toast } from "@/components/ui/sonner";
 import { Spinner } from "@/components/ui/spinner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError("");
-  setLoading(true);
-
-  try {
-    await login(email, password);
-    toast.success("Login berhasil!", {
-      description: "Selamat datang kembali.",
-    });
-  } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Email atau password salah";
-    toast.error(message, {
-      description: "Silakan coba lagi.",
-    });
-    setError(message);
-  } finally {
-    setLoading(false);
-  }
-};
+import { useRouter } from "next/dist/client/components/navigation";
+import { loginUser } from "@/app/actions/authActions";
+import { toast } from "sonner";
+import { set } from "zod";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(formData: FormData) {
+    setLoading(true);
+    setError(null);
+
+    const rawData = {
+      email: formData.get("email") as string,
+      password: formData.get("password") as string,
+    };
+
+    const result = await loginUser(rawData);
+
+    if (result.success) {
+      toast.success("Login successful!");
+      router.push("/dashboard");
+    } else {
+      setError(result.error || "Gagal login");
+      toast.error(result.error || "Gagal login");
+    }
+    setLoading(false);
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="space-y-3 text-center">
-          <div className="mx-auto rounded-2xl flex items-center justify-center shadow-lg">
-            <Image src="/" alt="Logo" width={200} height={200} />
-          </div>
           <CardTitle className="text-2xl font-bold">Login</CardTitle>
           <CardDescription className="text-foreground/70">
-            Login to your account to continue
+            Welcome back! Please enter your credentials to access your account.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form action={handleSubmit} className="space-y-4">
             {error && (
               <CardDescription className="text-red-600 bg-red-100 p-2 rounded">
                 <CardDescription>{error}</CardDescription>
@@ -67,12 +64,10 @@ export default function LoginPage() {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
-                className="border-black/40"
+                className="border-foreground/40"
                 id="email"
                 type="text"
                 placeholder="Masukkan email Anda"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
@@ -80,12 +75,10 @@ export default function LoginPage() {
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
-                className="border-black/40"
+                className="border-foreground/40"
                 id="password"
                 type="password"
                 placeholder="•••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
