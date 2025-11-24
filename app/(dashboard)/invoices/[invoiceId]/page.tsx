@@ -35,7 +35,6 @@ export default async function InvoiceDetailPage({
     },
   });
 
-  // Jika invoice tidak ditemukan
   if (!invoice) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
@@ -65,13 +64,8 @@ export default async function InvoiceDetailPage({
         </div>
         <InvoiceActions invoiceId={invoice.id} status={invoice.status} />
         <div className="flex gap-2">
-          <Button variant="outline">
-            <Printer className="w-4 h-4 mr-2" /> Print
-          </Button>
           <FinalizeButton invoiceId={invoice.id} pdfUrl={invoice.pdfUrl} />
-          <Button>
-            <SendEmailBtn invoiceId={invoice.id} />
-          </Button>
+          <SendEmailBtn invoiceId={invoice.id} />
         </div>
       </div>
 

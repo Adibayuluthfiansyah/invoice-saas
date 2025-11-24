@@ -11,7 +11,6 @@ import {
 } from "@/lib/zodSchemas";
 import { deleteSession } from "@/lib/session";
 import {redirect} from "next/navigation";
-import { toast } from "sonner";
 
 // REGISTER FUNCTION
 export async function registerUser(data: RegisterInput) {
