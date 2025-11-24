@@ -7,13 +7,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CheckCircle, MoreVertical, Trash, XCircle } from "lucide-react";
+import {
+  CheckCircle,
+  MoreVertical,
+  Pencil,
+  Trash,
+  XCircle,
+} from "lucide-react";
 import {
   deleteInvoice,
   updateInvoiceStatus,
 } from "@/app/actions/invoiceActions";
 import { toast } from "sonner";
 import { InvoiceStatus } from "@prisma/client";
+import Link from "next/link";
 
 export function InvoiceActions({
   invoiceId,
@@ -79,6 +86,14 @@ export function InvoiceActions({
             className="text-red-600 focus:text-red-600 cursor-pointer"
           >
             <Trash className="w-4 h-4 mr-2" /> Hapus Invoice
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link
+              href={`/invoices/${invoiceId}/edit`}
+              className="cursor-pointer flex items-center"
+            >
+              <Pencil className="w-4 h-4 mr-2" /> Edit Invoice
+            </Link>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

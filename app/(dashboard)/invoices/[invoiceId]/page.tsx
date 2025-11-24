@@ -1,6 +1,7 @@
 import { DownloadInvoiceBtn } from "@/components/dashboard/DownloadInvoiceBtn";
 import { FinalizeButton } from "@/components/dashboard/FinalizeButton";
 import { InvoiceActions } from "@/components/dashboard/InvoiceActions";
+import { SendEmailBtn } from "@/components/dashboard/SendEmailBtn";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -69,7 +70,7 @@ export default async function InvoiceDetailPage({
           </Button>
           <FinalizeButton invoiceId={invoice.id} pdfUrl={invoice.pdfUrl} />
           <Button>
-            <Mail className="w-4 h-4 mr-2" /> Kirim ke Email
+            <SendEmailBtn invoiceId={invoice.id} />
           </Button>
         </div>
       </div>

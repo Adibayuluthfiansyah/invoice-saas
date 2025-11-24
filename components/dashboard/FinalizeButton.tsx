@@ -32,7 +32,7 @@ export function FinalizeButton({
     return (
       <Button variant="outline" asChild>
         <Link href={pdfUrl} target="_blank" rel="noopener noreferrer">
-          <Download className="w-4 h-4 mr-2" /> Download PDF Invoice
+          <Download className="w-4 h-4 mr-2" /> Download PDF Resmi
         </Link>
       </Button>
     );
