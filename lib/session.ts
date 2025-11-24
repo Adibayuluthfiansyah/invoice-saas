@@ -2,6 +2,7 @@ import 'server-only'
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
 
+
 const secretKey = process.env.SESSION_SECRET || 'rahasia-dapur-ga-boleh-tau-siapapun'
 const encodedKey = new TextEncoder().encode(secretKey)
 

@@ -1,4 +1,6 @@
 import { DownloadInvoiceBtn } from "@/components/dashboard/DownloadInvoiceBtn";
+import { FinalizeButton } from "@/components/dashboard/FinalizeButton";
+import { InvoiceActions } from "@/components/dashboard/InvoiceActions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -60,11 +62,12 @@ export default async function InvoiceDetailPage({
           <h1 className="text-2xl font-bold tracking-tight">Detail Invoice</h1>
           <StatusBadge status={invoice.status} />
         </div>
+        <InvoiceActions invoiceId={invoice.id} status={invoice.status} />
         <div className="flex gap-2">
           <Button variant="outline">
             <Printer className="w-4 h-4 mr-2" /> Print
           </Button>
-          <DownloadInvoiceBtn data={invoice} />
+          <FinalizeButton invoiceId={invoice.id} pdfUrl={invoice.pdfUrl} />
           <Button>
             <Mail className="w-4 h-4 mr-2" /> Kirim ke Email
           </Button>

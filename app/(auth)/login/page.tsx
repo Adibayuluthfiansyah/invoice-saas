@@ -16,7 +16,7 @@ import { useState } from "react";
 import { useRouter } from "next/dist/client/components/navigation";
 import { loginUser } from "@/app/actions/authActions";
 import { toast } from "sonner";
-import { set } from "zod";
+import { Description } from "@radix-ui/react-dialog";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,7 +35,9 @@ export default function LoginPage() {
     const result = await loginUser(rawData);
 
     if (result.success) {
-      toast.success("Login successful!");
+      toast.success("LOGIN BERHASIL!", {
+        description: "SELAMAT DATANG.",
+      });
       router.refresh();
       router.push("/dashboard");
     } else {
@@ -51,7 +53,7 @@ export default function LoginPage() {
         <CardHeader className="space-y-3 text-center">
           <CardTitle className="text-2xl font-bold">Login</CardTitle>
           <CardDescription className="text-foreground/70">
-            Welcome back! Please enter your credentials to access your account.
+            Selamat Datang Kembali, Silakan masuk ke akun Anda
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -87,7 +89,7 @@ export default function LoginPage() {
             </div>
 
             <div className="text-center text-sm text-muted-foreground">
-              Belum punya akun?{" "}
+              Tidak punya akun?{" "}
               <Link
                 href="/register"
                 className="text-primary hover:underline font-medium"

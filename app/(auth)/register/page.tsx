@@ -36,7 +36,9 @@ export default function RegisterPage() {
     const result = await registerUser(rawData);
 
     if (result.success) {
-      toast.success("Account created successfully! Login use your credentials");
+      toast.success("AKUN BERHASIL DIBUAT!", {
+        description: "SILAHKAN MASUK KE AKUN ANDA.",
+      });
       router.push("/login");
     } else {
       setError(result.error || "Gagal mendaftar");
@@ -48,9 +50,9 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-lg shadow-xl">
         <CardHeader className="space-y-3 text-center">
-          <CardTitle className="text-3xl font-bold">Create Account</CardTitle>
+          <CardTitle className="text-3xl font-bold">Buat Akun</CardTitle>
           <CardDescription className="text-foreground/70">
-            Create your account to start managing your invoices
+            Buat akun Anda untuk mulai mengelola invoice Anda
           </CardDescription>
         </CardHeader>
         <CardContent>

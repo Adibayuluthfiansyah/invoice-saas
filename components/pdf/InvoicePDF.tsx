@@ -1,13 +1,26 @@
 /* eslint-disable jsx-a11y/alt-text */
-import {
-  Page,
-  Text,
-  View,
-  Document,
-  StyleSheet,
-  Font,
-} from "@react-pdf/renderer";
+import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
 import { formatCurrency, formatDate } from "@/lib/utils";
+
+export interface InvoiceData {
+  invoiceNumber: string;
+  issueDate: Date;
+  dueDate: Date;
+  totalAmount: number;
+  subTotal: number;
+  taxRate: number;
+  taxAmount: number;
+  customer: {
+    name: string;
+    email: string;
+    address: string | null;
+  };
+  items: {
+    description: string;
+    quantity: number;
+    unitPrice: number;
+  }[];
+}
 
 const styles = StyleSheet.create({
   page: {
@@ -25,15 +38,12 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     textTransform: "uppercase",
-    color: "#111827", // Gray-900
+    color: "#111827",
   },
   subtitle: {
     fontSize: 10,
-    color: "#6B7280", // Gray-500
+    color: "#6B7280",
     marginTop: 4,
-  },
-  section: {
-    marginBottom: 10,
   },
   row: {
     flexDirection: "row",
@@ -54,12 +64,12 @@ const styles = StyleSheet.create({
   table: {
     marginTop: 20,
     borderWidth: 1,
-    borderColor: "#E5E7EB", // Gray-200
+    borderColor: "#E5E7EB",
     borderRadius: 4,
   },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#F9FAFB", // Gray-50
+    backgroundColor: "#F9FAFB",
     borderBottomWidth: 1,
     borderBottomColor: "#E5E7EB",
     padding: 8,
@@ -99,14 +109,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
     paddingTop: 4,
   },
-  grandTotalValue: { fontSize: 12, color: "#2563EB", fontWeight: "bold" }, // Blue-600
+  grandTotalValue: { fontSize: 12, color: "#2563EB", fontWeight: "bold" },
 });
 
-interface InvoicePDFProps {
-  data: any; // Gunakan tipe yang lebih spesifik jika ada (misal Prisma Type)
-}
-
-export function InvoicePDF({ data }: InvoicePDFProps) {
+// 2. Gunakan Interface di Props
+export function InvoicePDF({ data }: { data: InvoiceData }) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -118,10 +125,8 @@ export function InvoicePDF({ data }: InvoicePDFProps) {
           </View>
           <View style={{ alignItems: "flex-end" }}>
             <Text style={[styles.value, { fontWeight: "bold", fontSize: 12 }]}>
-              {/* Disini bisa nama perusahaan user */}
               MY COMPANY
             </Text>
-            {/* <Text style={styles.label}>business@email.com</Text> */}
           </View>
         </View>
 
@@ -166,7 +171,8 @@ export function InvoicePDF({ data }: InvoicePDFProps) {
             </View>
           </View>
 
-          {data.items.map((item: any, index: number) => (
+          {/* 3. Hapus Any di sini juga */}
+          {data.items.map((item, index) => (
             <View key={index} style={styles.tableRow}>
               <View style={styles.tableColDesc}>
                 <Text style={styles.textRow}>{item.description}</Text>
@@ -212,7 +218,6 @@ export function InvoicePDF({ data }: InvoicePDFProps) {
           </View>
         </View>
 
-        {/* FOOTER */}
         <View style={{ position: "absolute", bottom: 30, left: 30, right: 30 }}>
           <Text style={{ fontSize: 8, textAlign: "center", color: "#9CA3AF" }}>
             Terima kasih atas kepercayaan Anda. Pembayaran dapat ditransfer ke
