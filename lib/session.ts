@@ -16,7 +16,12 @@ export async function createSession(userId: string) {
   const cookieStore = await cookies()
   cookieStore.set('session', session, {
     httpOnly: true,
-    secure: true,
+
+    // == This is for production ==
+    // secure: true,
+
+    // === This for development ===
+    secure: process.env.NODE_ENV === 'production',
     expires: expiresAt,
     sameSite: 'lax',
     path: '/',
@@ -34,10 +39,10 @@ export async function getSession() {
     })
     return payload
   } catch (error) {
+    console.error('Invalid session token:', error)
     return null
   }
 }
-
 
 export async function deleteSession() {
   const cookieStore = await cookies()

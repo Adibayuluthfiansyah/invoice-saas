@@ -36,6 +36,7 @@ export default function LoginPage() {
 
     if (result.success) {
       toast.success("Login successful!");
+      router.refresh();
       router.push("/dashboard");
     } else {
       setError(result.error || "Gagal login");
@@ -66,7 +67,8 @@ export default function LoginPage() {
               <Input
                 className="border-foreground/40"
                 id="email"
-                type="text"
+                name="email"
+                type="email"
                 placeholder="Masukkan email Anda"
                 required
               />
@@ -77,6 +79,7 @@ export default function LoginPage() {
               <Input
                 className="border-foreground/40"
                 id="password"
+                name="password"
                 type="password"
                 placeholder="•••••••••"
                 required

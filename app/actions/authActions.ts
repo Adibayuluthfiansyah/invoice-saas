@@ -2,13 +2,15 @@
 
 import { prisma } from "@/lib/prisma";
 import { hash, compare } from "bcryptjs";
-import { createSession } from "@/lib/session";
+import { createSession,} from "@/lib/session";
 import { 
   registerSchema, 
   RegisterInput, 
   loginSchema, 
   LoginInput 
 } from "@/lib/zodSchemas";
+import { deleteSession } from "@/lib/session";
+import {redirect} from "next/navigation";
 
 // REGISTER FUNCTION
 export async function registerUser(data: RegisterInput) {
@@ -70,5 +72,15 @@ export async function loginUser(data: LoginInput) {
   } catch (error) {
     console.error("Login Error:", error);
     return { success: false, error: "Terjadi kesalahan tak terduga" };
+  }
+}
+
+export async function logoutUser() {
+  try {
+    await deleteSession();
+    redirect('/login');
+  } catch (error) {
+    console.error("Logout Error:", error);
+    return { success: false, error: "Terjadi kesalahan saat logout" };
   }
 }
