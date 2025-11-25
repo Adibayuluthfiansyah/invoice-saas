@@ -2,10 +2,14 @@ import { CreateInvoiceForm } from "@/components/dashboard/CreateInvoiceForm";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
+import { customAlphabet } from "nanoid";
 
 export default async function CreateInvoicePage() {
   const session = await getSession();
   if (!session?.userId) return redirect("/login");
+
+  const generateInvoiceId = customAlphabet("1234567890", 6);
+  const invoiceNumber = `INV-${generateInvoiceId()}`;
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId as string },
@@ -14,7 +18,7 @@ export default async function CreateInvoicePage() {
 
   if (!user) return redirect("/login");
 
-  const invoiceNumber = `INV-${Math.floor(Math.random() * 10000)}`;
+  const defaultTax = user.businessProfile?.invoiceTaxRate || 0;
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -24,7 +28,11 @@ export default async function CreateInvoicePage() {
           Isi formulir di bawah untuk membuat invoice baru.
         </p>
       </div>
-      <CreateInvoiceForm user={user} invoiceNumber={invoiceNumber} />
+      <CreateInvoiceForm
+        user={user}
+        invoiceNumber={invoiceNumber}
+        defaultTax={defaultTax}
+      />
     </div>
   );
 }

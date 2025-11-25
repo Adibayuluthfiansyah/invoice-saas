@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { renderToStream } from "@react-pdf/renderer";
-import { InvoicePDF } from "@/components/pdf/InvoicePDF";
+import { InvoicePDF, InvoiceData } from "@/components/pdf/InvoicePDF";
 import { supabase } from "@/lib/supabase";
 import { revalidatePath } from "next/cache";
 
@@ -14,12 +14,49 @@ export async function generateAndSavePDF(invoiceId: string) {
   try {
     const invoice = await prisma.invoice.findUnique({
       where: { id: invoiceId, userId: session.userId as string },
-      include: { customer: true, items: true },
+      include: {
+        customer: true,
+        items: true,
+        user: {
+          include: {
+            businessProfile: true,
+          },
+        },
+      },
     });
 
     if (!invoice) return { success: false, message: "Invoice not found" };
+    const pdfData: InvoiceData = {
+      invoiceNumber: invoice.invoiceNumber,
+      issueDate: invoice.issueDate,
+      dueDate: invoice.dueDate,
+      totalAmount: invoice.totalAmount,
+      subTotal: invoice.subTotal,
+      taxRate: invoice.taxRate,
+      taxAmount: invoice.taxAmount,
+      customer: {
+        name: invoice.customer.name,
+        email: invoice.customer.email,
+        address: invoice.customer.address || "",
+      },
+      sender: {
+        name:
+          invoice.user.businessProfile?.companyName ||
+          invoice.user.name ||
+          "Bisnis Tanpa Nama",
+        address: invoice.user.businessProfile?.address || "",
+        email: invoice.user.email,
+        taxId: invoice.user.businessProfile?.taxId || null,
+        logoUrl: invoice.user.businessProfile?.logoUrl || null,
+      },
+      items: invoice.items.map((item) => ({
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      })),
+    };
 
-    const stream = await renderToStream(<InvoicePDF data={invoice as any} />);
+    const stream = await renderToStream(<InvoicePDF data={pdfData} />);
 
     const chunks: Uint8Array[] = [];
 

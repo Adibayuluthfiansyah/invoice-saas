@@ -21,7 +21,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { formatCurrency } from "@/lib/utils";
 import { CalendarIcon, Plus, Trash } from "lucide-react";
 import { useActionState, useState } from "react";
-import { createInvoice, SubmissionState } from "@/app/actions/CreateInvoice";
+import {
+  createInvoice,
+  type SubmissionState,
+} from "@/app/actions/CreateInvoice";
 import { format } from "date-fns";
 
 interface UserProps {
@@ -35,6 +38,7 @@ interface UserProps {
 interface CreateInvoiceFormProps {
   user: UserProps;
   invoiceNumber: string;
+  defaultTax: number;
 }
 
 interface InvoiceItem {
@@ -47,15 +51,15 @@ interface InvoiceItem {
 export function CreateInvoiceForm({
   user,
   invoiceNumber,
+  defaultTax,
 }: CreateInvoiceFormProps) {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [tax, setTax] = useState(defaultTax || 0);
 
   const [items, setItems] = useState<InvoiceItem[]>(() => [
     { id: Date.now(), description: "", quantity: 1, rate: 0 },
   ]);
-
   const initialState: SubmissionState = { status: "success", message: "" };
-
   const [state, formAction] = useActionState(createInvoice, initialState);
 
   const handleAddItem = () => {
@@ -85,9 +89,18 @@ export function CreateInvoiceForm({
     setItems(newItems);
   };
 
-  const calculateTotal = items.reduce((acc, item) => {
-    return acc + item.quantity * item.rate;
-  }, 0);
+  const calculateTotals = () => {
+    const subtotal = items.reduce((acc, item) => {
+      return acc + (Number(item.quantity) || 0) * (Number(item.rate) || 0);
+    }, 0);
+
+    const taxAmount = subtotal * (tax / 100);
+    const total = subtotal + taxAmount;
+
+    return { subtotal, taxAmount, total };
+  };
+
+  const { subtotal, taxAmount, total } = calculateTotals();
 
   return (
     <form action={formAction}>
@@ -99,6 +112,7 @@ export function CreateInvoiceForm({
 
       <div className="grid gap-4 md:grid-cols-3">
         <div className="md:col-span-2 space-y-6">
+          {/* --- INFO INVOICE --- */}
           <Card>
             <CardContent className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -177,7 +191,7 @@ export function CreateInvoiceForm({
             </CardContent>
           </Card>
 
-          {/* ... DATA CLIENT ... */}
+          {/* --- DATA KLIEN --- */}
           <Card>
             <CardContent className="p-6 grid gap-4">
               <h3 className="font-semibold">Data Klien</h3>
@@ -210,7 +224,7 @@ export function CreateInvoiceForm({
             </CardContent>
           </Card>
 
-          {/* ...  Item Tagihan ... */}
+          {/* --- ITEM TAGIHAN --- */}
           <Card>
             <CardContent className="p-6 space-y-4">
               <div className="flex items-center justify-between">
@@ -281,28 +295,47 @@ export function CreateInvoiceForm({
                   </div>
                 ))}
               </div>
+
+              {/* INPUT PAJAK */}
+              <div className="flex justify-end pt-4">
+                <div className="w-1/3 space-y-2">
+                  <Label>Pajak (%)</Label>
+                  <Input
+                    name="tax"
+                    type="number"
+                    placeholder="0"
+                    min="0"
+                    max="100"
+                    step="0.01" // Support desimal (misal: 11.5)
+                    value={tax}
+                    onChange={(e) => setTax(Number(e.target.value))}
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* ... Bagian Kanan (Total & Submit) ... */}
+        {/* --- BAGIAN KANAN (RINGKASAN) --- */}
         <div className="md:col-span-1 space-y-4">
           <Card className="bg-muted/20">
             <CardContent className="p-6 space-y-4">
               <div className="flex justify-between items-center">
                 <span className="font-medium">Subtotal</span>
-                <span>{formatCurrency(calculateTotal)}</span>
+                <span>{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="font-medium">Pajak (0%)</span>
-                <span>Rp 0</span>
+                <span className="font-medium">Pajak ({tax}%)</span>
+                <span className="text-muted-foreground">
+                  +{formatCurrency(taxAmount)}
+                </span>
               </div>
               <div className="border-t pt-4 flex justify-between items-center">
                 <span className="font-bold text-lg">Total</span>
                 <span className="font-bold text-lg underline decoration-primary decoration-4 underline-offset-4">
-                  {formatCurrency(calculateTotal)}
+                  {formatCurrency(total)}
                 </span>
-                <input type="hidden" name="total" value={calculateTotal} />
+                <input type="hidden" name="total" value={total} />
               </div>
             </CardContent>
           </Card>

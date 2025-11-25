@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { Mail, MapPin, Plus, User } from "lucide-react";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 export default async function CustomersPage() {
   const session = await getSession();
@@ -23,8 +24,10 @@ export default async function CustomersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold tracking-tight">Customers</h2>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" /> Tambah Customer
+        <Button asChild>
+          <Link href="/customers/create">
+            <Plus className="mr-2 h-4 w-4" /> Tambah Customer
+          </Link>
         </Button>
       </div>
 

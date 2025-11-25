@@ -2,22 +2,22 @@
 
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { invoiceSchema } from "@/lib/zodSchemas"; 
+import { invoiceSchema } from "@/lib/zodSchemas";
 import { redirect } from "next/navigation";
-import { InvoiceStatus } from "@prisma/client";
+import { InvoiceStatus } from "@prisma/client"; 
 
 export type SubmissionState = {
   status: "success" | "error";
-  errors?: Record<string, string[]>; 
+  errors?: Record<string, string[]>;
   message?: string;
 };
 
 export async function createInvoice(
-  prevState: SubmissionState, 
+  prevState: SubmissionState,
   formData: FormData
 ): Promise<SubmissionState> {
   const session = await getSession();
-  
+
   if (!session?.userId) {
     return { status: "error", message: "Unauthorized" };
   }
@@ -25,16 +25,23 @@ export async function createInvoice(
   const descriptions = formData.getAll("itemDescription");
   const quantities = formData.getAll("itemQuantity");
   const rates = formData.getAll("itemRate");
+  const taxRate = Number(formData.get("tax") || 0);
 
   const items = descriptions.map((desc, index) => ({
     description: desc as string,
     quantity: Number(quantities[index]),
     rate: Number(rates[index]),
   }));
+  let subTotal = 0;
+  items.forEach((item) => {
+    subTotal += item.quantity * item.rate;
+  });
+  const taxAmount = Math.round(subTotal * (taxRate / 100));
+  const totalAmount = subTotal + taxAmount;
 
   const rawData = {
     invoiceName: formData.get("invoiceName") as string,
-    total: Number(formData.get("total")),
+    total: totalAmount,
     status: formData.get("status") as string,
     date: new Date(formData.get("date") as string),
     dueDate: Number(formData.get("dueDate")),
@@ -46,6 +53,7 @@ export async function createInvoice(
     clientAddress: formData.get("clientAddress") as string,
     currency: formData.get("currency") as string,
     items: items,
+    tax: taxRate,
   };
 
   const validatedData = invoiceSchema.safeParse(rawData);
@@ -61,46 +69,53 @@ export async function createInvoice(
   const data = validatedData.data;
 
   try {
-    // Cek atau Buat Customer
     let customer = await prisma.customer.findFirst({
-        where: { 
-            email: data.clientEmail,
-            userId: session.userId as string
-        }
+      where: {
+        email: data.clientEmail,
+        userId: session.userId as string,
+      },
     });
 
     if (!customer) {
-        customer = await prisma.customer.create({
-            data: {
-                name: data.clientName,
-                email: data.clientEmail,
-                address: data.clientAddress,
-                userId: session.userId as string
-            }
-        })
+      customer = await prisma.customer.create({
+        data: {
+          name: data.clientName,
+          email: data.clientEmail,
+          address: data.clientAddress,
+          userId: session.userId as string,
+        },
+      });
     }
 
     await prisma.invoice.create({
-        data: {
+      data: {
         invoiceNumber: data.invoiceName,
         issueDate: data.date,
-        dueDate: new Date(data.date.getTime() + data.dueDate * 24 * 60 * 60 * 1000),
+        dueDate: new Date(
+          data.date.getTime() + data.dueDate * 24 * 60 * 60 * 1000
+        ),
+
         status: data.status as InvoiceStatus,
-        totalAmount: data.total,
+        
+        totalAmount: totalAmount,
+        subTotal: subTotal,
+        taxAmount: taxAmount,
+        taxRate: data.tax, 
+
         userId: session.userId as string,
         customerId: customer.id,
         items: {
-            create: data.items.map((item) => ({
-                description: item.description,
-                quantity: item.quantity,
-                unitPrice: item.rate
-            }))
-        }
+          create: data.items.map((item) => ({
+            description: item.description,
+            quantity: item.quantity,
+            unitPrice: item.rate,
+          })),
         },
+      },
     });
   } catch (error) {
-      console.error(error);
-      return { status: "error", message: "Gagal menyimpan invoice ke database." };
+    console.error(error);
+    return { status: "error", message: "Gagal menyimpan invoice ke database." };
   }
 
   redirect("/invoices");

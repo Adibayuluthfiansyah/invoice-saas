@@ -1,4 +1,3 @@
-import { DownloadInvoiceBtn } from "@/components/dashboard/DownloadInvoiceBtn";
 import { FinalizeButton } from "@/components/dashboard/FinalizeButton";
 import { InvoiceActions } from "@/components/dashboard/InvoiceActions";
 import { SendEmailBtn } from "@/components/dashboard/SendEmailBtn";
@@ -8,7 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { ChevronLeft, Download, Mail, Printer } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -167,7 +166,7 @@ export default async function InvoiceDetailPage({
   );
 }
 
-// Helper Badge (Sama seperti di list page)
+// Helper Badge
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     DRAFT: "bg-gray-500",

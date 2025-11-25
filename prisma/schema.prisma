@@ -24,14 +24,14 @@ model User {
 
 // Model BusinessProfile (Data untuk Kop Surat/Header Invoice)
 model BusinessProfile {
-  id          String  @id @default(cuid())
-  companyName String
-  address     String?
-  logoUrl     String? // URL logo di S3/Cloudinary
-  taxId       String? // NPWP 
-
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
+  id             String  @id @default(cuid())
+  companyName    String
+  address        String?
+  logoUrl        String? // URL logo di S3/Cloudinary
+  taxId          String? // NPWP 
+  invoiceTaxRate Float   @default(0)
+  userId         String  @unique
+  user           User    @relation(fields: [userId], references: [id])
 }
 
 //  Model Customer (Klien yang ditagih)

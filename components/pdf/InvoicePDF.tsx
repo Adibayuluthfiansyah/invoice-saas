@@ -1,5 +1,12 @@
 /* eslint-disable jsx-a11y/alt-text */
-import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
+import {
+  Page,
+  Text,
+  View,
+  Document,
+  StyleSheet,
+  Image,
+} from "@react-pdf/renderer";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export interface InvoiceData {
@@ -15,6 +22,13 @@ export interface InvoiceData {
     email: string;
     address: string | null;
   };
+  sender: {
+    name: string;
+    address: string | null;
+    email: string;
+    taxId: string | null;
+    logoUrl: string | null;
+  };
   items: {
     description: string;
     quantity: number;
@@ -23,6 +37,12 @@ export interface InvoiceData {
 }
 
 const styles = StyleSheet.create({
+  logo: {
+    width: 60,
+    height: 60,
+    objectFit: "contain",
+    marginBottom: 4,
+  },
   page: {
     flexDirection: "column",
     backgroundColor: "#FFFFFF",
@@ -112,21 +132,37 @@ const styles = StyleSheet.create({
   grandTotalValue: { fontSize: 12, color: "#2563EB", fontWeight: "bold" },
 });
 
-// 2. Gunakan Interface di Props
 export function InvoicePDF({ data }: { data: InvoiceData }) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* HEADER */}
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>INVOICE</Text>
             <Text style={styles.subtitle}>#{data.invoiceNumber}</Text>
           </View>
           <View style={{ alignItems: "flex-end" }}>
-            <Text style={[styles.value, { fontWeight: "bold", fontSize: 12 }]}>
-              MY COMPANY
+            {/* LOGO */}
+            {data.sender.logoUrl && (
+              <Image style={styles.logo} src={data.sender.logoUrl} />
+            )}
+            <Text
+              style={[
+                styles.value,
+                {
+                  fontWeight: "bold",
+                  fontSize: 12,
+                  textTransform: "uppercase",
+                },
+              ]}
+            >
+              {data.sender.name}
             </Text>
+            <Text style={styles.value}>{data.sender.address}</Text>
+            <Text style={styles.value}>{data.sender.email}</Text>
+            {data.sender.taxId && (
+              <Text style={styles.value}>NPWP: {data.sender.taxId}</Text>
+            )}
           </View>
         </View>
 
@@ -171,7 +207,6 @@ export function InvoicePDF({ data }: { data: InvoiceData }) {
             </View>
           </View>
 
-          {/* 3. Hapus Any di sini juga */}
           {data.items.map((item, index) => (
             <View key={index} style={styles.tableRow}>
               <View style={styles.tableColDesc}>
@@ -194,18 +229,19 @@ export function InvoicePDF({ data }: { data: InvoiceData }) {
           ))}
         </View>
 
-        {/* TOTAL SECTION */}
         <View style={styles.totalSection}>
           <View style={styles.totalBox}>
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Subtotal</Text>
               <Text style={styles.totalValue}>
-                {formatCurrency(data.totalAmount)}
+                {formatCurrency(data.subTotal)}
               </Text>
             </View>
             <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Pajak (0%)</Text>
-              <Text style={styles.totalValue}>Rp 0</Text>
+              <Text style={styles.totalLabel}>Pajak ({data.taxRate}%)</Text>
+              <Text style={styles.totalValue}>
+                {formatCurrency(data.taxAmount)}
+              </Text>
             </View>
             <View style={[styles.totalRow, styles.grandTotal]}>
               <Text style={[styles.totalLabel, { fontWeight: "bold" }]}>
@@ -220,8 +256,7 @@ export function InvoicePDF({ data }: { data: InvoiceData }) {
 
         <View style={{ position: "absolute", bottom: 30, left: 30, right: 30 }}>
           <Text style={{ fontSize: 8, textAlign: "center", color: "#9CA3AF" }}>
-            Terima kasih atas kepercayaan Anda. Pembayaran dapat ditransfer ke
-            rekening BCA 1234567890.
+            Terima kasih atas kepercayaan Anda.
           </Text>
         </View>
       </Page>
