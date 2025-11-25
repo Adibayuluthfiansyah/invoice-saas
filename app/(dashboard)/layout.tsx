@@ -5,6 +5,7 @@ import { MainNav } from "@/components/dashboard/MainNav";
 import { UserNav } from "@/components/dashboard/UserNav";
 import { MobileNav } from "@/components/dashboard/MobileNav";
 import Link from "next/link";
+import Image from "next/image";
 
 async function getUser() {
   const session = await getSession();
@@ -16,7 +17,7 @@ async function getUser() {
       id: true,
       name: true,
       email: true,
-      businessProfile: { select: { companyName: true } },
+      businessProfile: { select: { companyName: true, logoUrl: true } },
     },
   });
 
@@ -49,8 +50,13 @@ export default async function DashboardLayout({
               href="/dashboard"
               className="font-bold text-xl tracking-tight flex items-center gap-2"
             >
-              <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
-                {companyName.charAt(0).toUpperCase()}
+              <div className="h-17 w-17 rounded-lg flex items-center justify-center text-primary-foreground">
+                <Image
+                  src="/invoicelogo-removebg-preview.png"
+                  alt="Logo"
+                  width={250}
+                  height={250}
+                />
               </div>
             </Link>
 
@@ -65,6 +71,7 @@ export default async function DashboardLayout({
               user={{
                 name: user.name,
                 email: user.email,
+                image: user.businessProfile?.logoUrl || null,
               }}
             />
           </div>

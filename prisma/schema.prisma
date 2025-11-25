@@ -10,11 +10,13 @@ datasource db {
 
 //  Model User (Pemilik akun SaaS)
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  password  String
-  createdAt DateTime @default(now())
+  id               String    @id @default(cuid())
+  email            String    @unique
+  name             String?
+  password         String
+  createdAt        DateTime  @default(now())
+  resetToken       String?   @unique // Secret Token reset password
+  resetTokenExpiry DateTime? // Token kadaluarsa 
 
   // Relasi: Satu User punya satu profil bisnis & banyak customer/invoice
   businessProfile BusinessProfile?

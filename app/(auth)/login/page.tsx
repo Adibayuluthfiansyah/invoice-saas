@@ -97,6 +97,14 @@ export default function LoginPage() {
                 Daftar di sini
               </Link>
             </div>
+            <div className="text-center text-sm text-muted-foreground">
+              <Link
+                href="/forgot-password"
+                className="text-primary hover:underline font-medium"
+              >
+                Lupa Password?
+              </Link>
+            </div>
 
             <Button
               type="submit"

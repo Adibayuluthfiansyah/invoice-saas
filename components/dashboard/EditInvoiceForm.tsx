@@ -19,14 +19,15 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { formatCurrency } from "@/lib/utils";
-import { CalendarIcon, Plus, Trash, Save } from "lucide-react";
-import { useActionState, useState } from "react";
+import { CalendarIcon, Plus, Trash, Save, Loader2 } from "lucide-react";
+import { useActionState, useState, useEffect } from "react";
 import { updateInvoice } from "@/app/actions/updateInvoice";
 import { SubmissionState } from "@/app/actions/CreateInvoice";
 import { format, differenceInDays } from "date-fns";
 import { Invoice, InvoiceItem, Customer } from "@prisma/client";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
-// Tipe data gabungan untuk props
 type InvoiceData = Invoice & {
   items: InvoiceItem[];
   customer: Customer;
@@ -37,13 +38,14 @@ interface EditInvoiceFormProps {
 }
 
 export function EditInvoiceForm({ invoice }: EditInvoiceFormProps) {
+  const router = useRouter();
   const [selectedDate, setSelectedDate] = useState(new Date(invoice.issueDate));
 
   const daysDiff = differenceInDays(
     new Date(invoice.dueDate),
     new Date(invoice.issueDate)
   );
-
+  const [tax, setTax] = useState(invoice.taxRate || 0);
   const [items, setItems] = useState(() =>
     invoice.items.map((item) => ({
       id: Math.random(),
@@ -54,7 +56,19 @@ export function EditInvoiceForm({ invoice }: EditInvoiceFormProps) {
   );
 
   const initialState: SubmissionState = { status: "success", message: "" };
-  const [state, formAction] = useActionState(updateInvoice, initialState);
+  const [state, formAction, isPending] = useActionState(
+    updateInvoice,
+    initialState
+  );
+
+  useEffect(() => {
+    if (state?.status === "success" && state.message) {
+      toast.success(state.message);
+      router.push(`/invoices/${invoice.id}`);
+    } else if (state?.status === "error" && state.message) {
+      toast.error(state.message);
+    }
+  }, [state, router, invoice.id]);
 
   const handleAddItem = () => {
     setItems([
@@ -73,30 +87,35 @@ export function EditInvoiceForm({ invoice }: EditInvoiceFormProps) {
     value: string | number
   ) => {
     const newItems = [...items];
-    // @ts-expect-error: Dynamic key assignment type safety
+    // @ts-expect-error: Dynamic assignment
     newItems[index][field] = field === "description" ? value : Number(value);
     setItems(newItems);
   };
 
-  const calculateTotal = items.reduce(
-    (acc, item) => acc + item.quantity * item.rate,
-    0
-  );
+  const calculateTotals = () => {
+    const subtotal = items.reduce((acc, item) => {
+      return acc + (Number(item.quantity) || 0) * (Number(item.rate) || 0);
+    }, 0);
+
+    const taxAmount = subtotal * (tax / 100);
+    const total = subtotal + taxAmount;
+
+    return { subtotal, taxAmount, total };
+  };
+
+  const { subtotal, taxAmount, total } = calculateTotals();
 
   return (
     <form action={formAction}>
       <input type="hidden" name="id" value={invoice.id} />
-      <input type="hidden" name="fromName" value="My Company" />{" "}
+      <input type="hidden" name="fromName" value="My Company" />
       <input type="hidden" name="fromEmail" value="email@company.com" />
       <input type="hidden" name="fromAddress" value="Alamat..." />
       <input type="hidden" name="currency" value="IDR" />
-      {state?.status === "error" && state.message && (
-        <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">
-          {state.message}
-        </div>
-      )}
+
       <div className="grid gap-4 md:grid-cols-3">
         <div className="md:col-span-2 space-y-6">
+          {/* KARTU INFO UTAMA */}
           <Card>
             <CardContent className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -170,6 +189,7 @@ export function EditInvoiceForm({ invoice }: EditInvoiceFormProps) {
             </CardContent>
           </Card>
 
+          {/* KARTU DATA KLIEN */}
           <Card>
             <CardContent className="p-6 grid gap-4">
               <h3 className="font-semibold">Data Klien</h3>
@@ -200,6 +220,7 @@ export function EditInvoiceForm({ invoice }: EditInvoiceFormProps) {
             </CardContent>
           </Card>
 
+          {/* KARTU ITEM & PAJAK */}
           <Card>
             <CardContent className="p-6 space-y-4">
               <div className="flex items-center justify-between">
@@ -265,8 +286,9 @@ export function EditInvoiceForm({ invoice }: EditInvoiceFormProps) {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="text-red-500"
+                        className="text-red-500 hover:text-red-700"
                         onClick={() => handleRemoveItem(index)}
+                        disabled={items.length === 1}
                       >
                         <Trash className="w-4 h-4" />
                       </Button>
@@ -274,28 +296,64 @@ export function EditInvoiceForm({ invoice }: EditInvoiceFormProps) {
                   </div>
                 ))}
               </div>
+
+              {/* INPUT PAJAK */}
+              <div className="flex justify-end pt-4">
+                <div className="w-1/3 space-y-2">
+                  <Label>Pajak (%)</Label>
+                  <Input
+                    name="tax"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={tax}
+                    onChange={(e) => setTax(Number(e.target.value))}
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
 
+        {/* BAGIAN RINGKASAN KANAN */}
         <div className="md:col-span-1 space-y-4">
           <Card className="bg-muted/20">
             <CardContent className="p-6 space-y-4">
               <div className="flex justify-between items-center">
                 <span className="font-medium">Subtotal</span>
-                <span>{formatCurrency(calculateTotal)}</span>
+                <span>{formatCurrency(subtotal)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Pajak ({tax}%)</span>
+                <span className="text-muted-foreground">
+                  +{formatCurrency(taxAmount)}
+                </span>
               </div>
               <div className="border-t pt-4 flex justify-between items-center">
                 <span className="font-bold text-lg">Total</span>
                 <span className="font-bold text-lg text-primary">
-                  {formatCurrency(calculateTotal)}
+                  {formatCurrency(total)}
                 </span>
-                <input type="hidden" name="total" value={calculateTotal} />
               </div>
             </CardContent>
           </Card>
-          <Button className="w-full" size="lg" type="submit">
-            <Save className="w-4 h-4 mr-2" /> Update Invoice
+
+          <Button
+            className="w-full"
+            size="lg"
+            type="submit"
+            disabled={isPending}
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Menyimpan...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" /> Simpan Perubahan
+              </>
+            )}
           </Button>
         </div>
       </div>

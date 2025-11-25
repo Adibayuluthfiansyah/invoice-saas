@@ -38,7 +38,11 @@ export function UserNav({ user }: UserNavProps) {
       <DropdownMenuTrigger asChild>
         <Button variant="secondary" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10 border border-primary">
-            <AvatarImage src={user.image || ""} alt={user.name || ""} />
+            <AvatarImage
+              src={user.image || ""}
+              alt={user.name || ""}
+              className="h-full w-full object-cover items-center justify-center"
+            />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
         </Button>

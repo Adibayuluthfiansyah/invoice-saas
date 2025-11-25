@@ -6,8 +6,6 @@ import { settingsSchema } from "@/lib/zodSchemas";
 import { revalidatePath } from "next/cache";
 import { SubmissionState } from "@/app/actions/CreateInvoice"; 
 import { supabase } from "@/lib/supabase";
-import { th } from "date-fns/locale";
-
 
 export async function updateBusinessProfile(
   prevState: SubmissionState, 
@@ -36,39 +34,47 @@ export async function updateBusinessProfile(
     };
   }
 
-  const logoFIle = formData.get("companyLogo") as File;
+ 
+  const logoFile = formData.get("logo") as File;
+  
   let logoUrlPath: string | null = null;
-  if (logoFIle && logoFIle.size > 0) {
-    if (!logoFIle.type.startsWith("image/")) {
+
+  if (logoFile && logoFile.size > 0) {
+    if (!logoFile.type.startsWith("image/")) {
       return {
         status: "error",
         message: "File logo harus berupa gambar.",
       };
     }
-    if (logoFIle.size > 2 * 1024 * 1024) {
+    
+    if (logoFile.size > 2 * 1024 * 1024) {
       return {
         status: "error",
         message: "Ukuran file logo maksimal 2MB.",
       };
     }
+
     try {
-      const fileName = `logo-${session.userId}-${Date.now()}.${logoFIle.name.split(".").pop()}`;
-      const arrayBuffer = await logoFIle.arrayBuffer();
+      const fileName = `logo-${session.userId}-${Date.now()}.${logoFile.name.split(".").pop()}`;
+      const arrayBuffer = await logoFile.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
-      const {error : uploadError} = await supabase.storage  
+      const { error: uploadError } = await supabase.storage  
         .from("logos")
         .upload(fileName, buffer, {
-        contentType: logoFIle.type,
-        upsert: true,
+          contentType: logoFile.type,
+          upsert: true,
         });
-        if (uploadError) throw uploadError;
 
-        const { data: publicUrlData } = supabase.storage
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase.storage
         .from("logos")
         .getPublicUrl(fileName);
-        logoUrlPath = publicUrlData.publicUrl;
-    }catch (error) {
+        
+      logoUrlPath = publicUrlData.publicUrl;
+      
+    } catch (error) {
       console.error("Upload Error:", error);
       return { status: "error", message: "Gagal mengupload logo." };
     }
@@ -84,7 +90,7 @@ export async function updateBusinessProfile(
         address: validated.data.address,
         taxId: validated.data.taxId,
         invoiceTaxRate: validated.data.invoiceTaxRate,
-        ...(logoUrlPath ? { logoUrl: logoUrlPath } : {}),
+        ...(logoUrlPath && { logoUrl: logoUrlPath }),
       },
       create: {
         userId: session.userId as string,
@@ -92,7 +98,7 @@ export async function updateBusinessProfile(
         address: validated.data.address,
         taxId: validated.data.taxId,
         invoiceTaxRate: validated.data.invoiceTaxRate,
-        logoUrl: logoUrlPath || "",
+        logoUrl: logoUrlPath || null, 
       },
     });
 
@@ -102,7 +108,7 @@ export async function updateBusinessProfile(
     
     return { status: "success", message: "Profil bisnis dan logo berhasil disimpan!" };
   } catch (error) {
-    console.error(error);
+    console.error("Database Error:", error);
     return { status: "error", message: "Gagal menyimpan data." };
   }
 }

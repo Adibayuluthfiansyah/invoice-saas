@@ -2,10 +2,10 @@
 
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { invoiceSchema} from "@/lib/zodSchemas";
+import { invoiceSchema } from "@/lib/zodSchemas";
 import { SubmissionState } from "@/app/actions/CreateInvoice";
-import { redirect } from "next/navigation";
 import { InvoiceStatus } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 
 export async function updateInvoice(
   prevState: SubmissionState,
@@ -16,22 +16,34 @@ export async function updateInvoice(
     return { status: "error", message: "Unauthorized" };
   }
 
-  const invoiceId = formData.get("id") as string; 
-
-
+  const invoiceId = formData.get("id") as string;
   const descriptions = formData.getAll("itemDescription");
   const quantities = formData.getAll("itemQuantity");
   const rates = formData.getAll("itemRate");
+  const taxRate = Number(formData.get("tax") || 0);
 
-  const items = descriptions.map((desc, index) => ({
-    description: desc as string,
-    quantity: Number(quantities[index]),
-    rate: Number(rates[index]),
-  }));
+  let subTotal = 0;
+  
+  const items = descriptions.map((desc, index) => {
+    const quantity = Number(quantities[index]);
+    const rate = Number(rates[index]);
+
+    subTotal += (quantity * rate);
+
+    return {
+      description: desc as string,
+      quantity: quantity,
+      rate: rate,
+    };
+  });
+
+
+  const taxAmount = Math.round(subTotal * (taxRate / 100));
+  const totalAmount = subTotal + taxAmount;
 
   const rawData = {
     invoiceName: formData.get("invoiceName") as string,
-    total: Number(formData.get("total")),
+    total: totalAmount,
     status: formData.get("status") as string,
     date: new Date(formData.get("date") as string),
     dueDate: Number(formData.get("dueDate")),
@@ -43,8 +55,8 @@ export async function updateInvoice(
     clientAddress: formData.get("clientAddress") as string,
     currency: formData.get("currency") as string,
     items: items,
+    tax: taxRate, 
   };
-
 
   const validatedData = invoiceSchema.safeParse(rawData);
 
@@ -59,7 +71,6 @@ export async function updateInvoice(
   const data = validatedData.data;
 
   try {
-
     await prisma.$transaction([
       prisma.invoiceItem.deleteMany({
         where: { invoiceId: invoiceId },
@@ -73,7 +84,12 @@ export async function updateInvoice(
             data.date.getTime() + data.dueDate * 24 * 60 * 60 * 1000
           ),
           status: data.status as InvoiceStatus,
-          totalAmount: data.total,
+          
+          subTotal: subTotal,
+          taxRate: data.tax,
+          taxAmount: taxAmount,
+          totalAmount: totalAmount,
+
           customer: {
             update: {
               name: data.clientName,
@@ -91,10 +107,14 @@ export async function updateInvoice(
         },
       }),
     ]);
+
+
+    revalidatePath(`/invoices/${invoiceId}`);
+    revalidatePath("/invoices");
+    return { status: "success", message: "Invoice berhasil diperbarui!" };
+
   } catch (error) {
-    console.error(error);
+    console.error("Update Error:", error);
     return { status: "error", message: "Gagal mengupdate invoice." };
   }
-
-  return redirect(`/invoices/${invoiceId}`);
 }

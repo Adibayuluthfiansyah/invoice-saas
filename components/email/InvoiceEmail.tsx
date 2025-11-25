@@ -80,7 +80,6 @@ export const InvoiceEmail: React.FC<InvoiceEmailProps> = ({
   </Html>
 );
 
-// Styles
 const main = { backgroundColor: "#ffffff", fontFamily: "sans-serif" };
 const container = {
   margin: "0 auto",

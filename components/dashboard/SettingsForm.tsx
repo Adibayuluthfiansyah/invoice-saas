@@ -70,9 +70,14 @@ export function SettingsForm({
         <CardContent className="space-y-6">
           {/* Bagian Logo */}
           <div className="flex items-center gap-6">
-            <Avatar className="h-24 w-24 border">
-              <AvatarImage src={previewUrl || ""} className="object-cover" />
-              <AvatarFallback>LOGO</AvatarFallback>
+            <Avatar className="h-24 w-24 border overflow-hidden shrink-0 rounded-lg bg-muted">
+              <AvatarImage
+                src={previewUrl || ""}
+                className="h-full w-full object-cover"
+              />
+              <AvatarFallback className="flex h-full w-full items-center justify-center text-xs text-muted-foreground font-medium">
+                LOGO
+              </AvatarFallback>
             </Avatar>
             <div className="space-y-2 w-full max-w-sm">
               <Label>Logo Perusahaan</Label>
