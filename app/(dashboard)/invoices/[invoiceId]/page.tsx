@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Link as LinkIcon } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -35,18 +35,11 @@ export default async function InvoiceDetailPage({
   });
 
   if (!invoice) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
-        <h2 className="text-2xl font-bold">Invoice Tidak Ditemukan</h2>
-        <p className="text-muted-foreground">
-          Invoice yang Anda cari tidak ada atau Anda tidak memiliki akses.
-        </p>
-        <Button asChild variant="outline">
-          <Link href="/invoices">Kembali ke Daftar</Link>
-        </Button>
-      </div>
-    );
+    return redirect("/invoices");
   }
+
+  // URL Public untuk dicopy
+  const publicLink = `${process.env.NEXT_PUBLIC_APP_URL}/invoice/${invoice.id}`;
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -61,8 +54,16 @@ export default async function InvoiceDetailPage({
           <h1 className="text-2xl font-bold tracking-tight">Detail Invoice</h1>
           <StatusBadge status={invoice.status} />
         </div>
-        <InvoiceActions invoiceId={invoice.id} status={invoice.status} />
-        <div className="flex gap-2">
+
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" asChild>
+            <a href={publicLink} target="_blank" rel="noopener noreferrer">
+              <LinkIcon className="w-4 h-4 mr-2" /> Lihat Invoice
+            </a>
+          </Button>
+
+          <InvoiceActions invoiceId={invoice.id} status={invoice.status} />
+
           <FinalizeButton invoiceId={invoice.id} pdfUrl={invoice.pdfUrl} />
           <SendEmailBtn invoiceId={invoice.id} />
         </div>
@@ -112,7 +113,6 @@ export default async function InvoiceDetailPage({
             <table className="w-full text-sm text-left">
               <thead className="bg-muted/50 text-muted-foreground font-medium border-b">
                 <tr>
-                  <th className="px-4 py-3 w-[10%]">#</th>
                   <th className="px-4 py-3 w-[50%]">Deskripsi</th>
                   <th className="px-4 py-3 text-right w-[15%]">Qty</th>
                   <th className="px-4 py-3 text-right w-[25%]">Harga Satuan</th>
@@ -120,11 +120,8 @@ export default async function InvoiceDetailPage({
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {invoice.items.map((item, index) => (
+                {invoice.items.map((item) => (
                   <tr key={item.id}>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {index + 1}
-                    </td>
                     <td className="px-4 py-3 font-medium">
                       {item.description}
                     </td>
@@ -166,7 +163,6 @@ export default async function InvoiceDetailPage({
   );
 }
 
-// Helper Badge
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     DRAFT: "bg-gray-500",

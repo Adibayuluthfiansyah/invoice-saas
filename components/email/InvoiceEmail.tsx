@@ -18,6 +18,7 @@ interface InvoiceEmailProps {
   pdfUrl: string;
   totalAmount: string;
   dueDate: string;
+  invoiceId?: string;
 }
 
 export const InvoiceEmail: React.FC<InvoiceEmailProps> = ({
@@ -26,6 +27,7 @@ export const InvoiceEmail: React.FC<InvoiceEmailProps> = ({
   pdfUrl,
   totalAmount,
   dueDate,
+  invoiceId,
 }) => (
   <Html>
     <Preview>Tagihan Baru #{invoiceNumber} dari MY COMPANY</Preview>
@@ -62,9 +64,17 @@ export const InvoiceEmail: React.FC<InvoiceEmailProps> = ({
             marginBottom: "32px",
           }}
         >
-          <Link href={pdfUrl} style={button}>
-            Download Invoice PDF
+          {/* TOMBOL UTAMA: LIHAT ONLINE */}
+          <Link
+            href={`${process.env.NEXT_PUBLIC_APP_URL}/invoice/${invoiceId}`}
+            style={button}
+          >
+            Lihat Invoice & Bayar
           </Link>
+
+          <Text style={{ marginTop: "16px", fontSize: "12px" }}>
+            Atau download PDF: <a href={pdfUrl}>Klik di sini</a>
+          </Text>
         </Section>
 
         <Text style={footer}>
