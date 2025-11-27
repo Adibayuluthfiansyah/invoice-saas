@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+7ONG INVOICE adalah aplikasi SaaS modern untuk membantu pemilik bisnis dan freelancer mengelola tagihan (invoice), klien, dan laporan keuangan dengan mudah. Dibangun menggunakan teknologi web terbaru untuk performa yang cepat dan tampilan yang profesional.
 
-## Getting Started
+🌟 Fitur Utama
+Dashboard Interaktif: Ringkasan pendapatan, status invoice, dan aktivitas terbaru dengan visualisasi grafik.
 
-First, run the development server:
+Manajemen Invoice: Buat, edit, hapus, dan pantau status invoice (Draft, Pending, Paid, Overdue).
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+PDF Generator: Otomatis generate invoice resmi dalam format PDF siap kirim/unduh.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Kirim via Email: Kirim notifikasi tagihan langsung ke email klien menggunakan integrasi Resend.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Manajemen Klien: Simpan data klien untuk pembuatan invoice yang lebih cepat.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Halaman Invoice Publik: Link unik untuk klien melihat invoice dan mengunduh PDF tanpa perlu login.
 
-## Learn More
+Kustomisasi Bisnis: Atur logo perusahaan, alamat, pajak, dan informasi bisnis lainnya.
 
-To learn more about Next.js, take a look at the following resources:
+Autentikasi Aman: Sistem login dan register aman menggunakan enkripsi password dan session management (JWT).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+🛠️ Teknologi yang Digunakan
+Project ini dibangun di atas stack modern (Next.js App Router):
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Framework: Next.js 15/16 (App Router)
 
-## Deploy on Vercel
+Bahasa: TypeScript
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Database: PostgreSQL (via Supabase)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+ORM: Prisma
+
+Styling: Tailwind CSS & Shadcn UI
+
+PDF Generation: @react-pdf/renderer
+
+Email Service: Resend
+
+Storage: Supabase Storage (Untuk upload logo & file PDF)
+
+Validasi: Zod

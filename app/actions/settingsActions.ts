@@ -22,6 +22,8 @@ export async function updateBusinessProfile(
     address: formData.get("address") as string,
     taxId: formData.get("taxId") as string,
     invoiceTaxRate: Number(formData.get("invoiceTaxRate") || 0),
+    paymentClientKey: formData.get("paymentClientKey") as string,
+    paymentServerKey: formData.get("paymentServerKey") as string,
   };
 
   const validated = settingsSchema.safeParse(rawData);
@@ -90,6 +92,8 @@ export async function updateBusinessProfile(
         address: validated.data.address,
         taxId: validated.data.taxId,
         invoiceTaxRate: validated.data.invoiceTaxRate,
+        paymentClientKey: validated.data.paymentClientKey,
+        paymentServerKey: validated.data.paymentServerKey,
         ...(logoUrlPath && { logoUrl: logoUrlPath }),
       },
       create: {
@@ -98,6 +102,8 @@ export async function updateBusinessProfile(
         address: validated.data.address,
         taxId: validated.data.taxId,
         invoiceTaxRate: validated.data.invoiceTaxRate,
+        paymentClientKey: validated.data.paymentClientKey,
+        paymentServerKey: validated.data.paymentServerKey,
         logoUrl: logoUrlPath || null, 
       },
     });

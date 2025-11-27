@@ -23,6 +23,8 @@ interface SettingsFormProps {
   address: string;
   taxId: string;
   defaultTaxRate: number;
+  paymentClientKey: string;
+  paymentServerKey: string;
   logoUrl?: string | null;
 }
 
@@ -31,6 +33,8 @@ export function SettingsForm({
   address,
   taxId,
   defaultTaxRate,
+  paymentClientKey,
+  paymentServerKey,
   logoUrl,
 }: SettingsFormProps) {
   const initialState: SubmissionState = { status: "success", message: "" };
@@ -138,6 +142,44 @@ export function SettingsForm({
               defaultValue={address}
               placeholder="Jalan Raya No. 1, Jakarta..."
             />
+          </div>
+
+          <div className="border-t my-6 pt-6">
+            <h3 className="font-semibold mb-4 text-lg">
+              Konfigurasi Pembayaran (Midtrans)
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Daftar di{" "}
+              <a
+                href="https://midtrans.com"
+                target="_blank"
+                className="text-primary underline"
+              >
+                Midtrans
+              </a>{" "}
+              untuk mendapatkan kunci ini agar pembayaran masuk langsung ke
+              rekening Anda.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Client Key (Public)</Label>
+                <Input
+                  name="paymentClientKey"
+                  defaultValue={paymentClientKey}
+                  placeholder="SB-Mid-client-..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Server Key (Secret)</Label>
+                <Input
+                  name="paymentServerKey"
+                  defaultValue={paymentServerKey}
+                  placeholder="SB-Mid-server-..."
+                  type="password"
+                />
+              </div>
+            </div>
           </div>
 
           <Button type="submit">Simpan Perubahan</Button>

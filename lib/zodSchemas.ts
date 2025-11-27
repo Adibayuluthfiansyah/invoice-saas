@@ -37,6 +37,8 @@ export const settingsSchema = z.object({
   address: z.string().optional(),
   taxId: z.string().optional(),
   invoiceTaxRate: z.number().min(0).max(100).optional(),
+  paymentClientKey: z.string().optional(),
+  paymentServerKey: z.string().optional(),
 });
 
 export const customerSchema = z.object({
