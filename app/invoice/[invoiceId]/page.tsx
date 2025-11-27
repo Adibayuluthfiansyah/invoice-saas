@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { notFound } from "next/navigation";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PayButton } from "@/components/invoice/PayButton";
 import Image from "next/image";
 
 export default async function PublicInvoicePage({
@@ -54,6 +55,8 @@ export default async function PublicInvoicePage({
             </Button>
           )}
         </div>
+
+        <PayButton invoiceId={invoice.id} status={invoice.status} />
 
         {/* Kartu Invoice  */}
         <Card className="shadow-xl border-t-4 border-t-primary overflow-hidden">

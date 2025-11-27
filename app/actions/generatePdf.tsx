@@ -26,6 +26,8 @@ export async function generateAndSavePDF(invoiceId: string) {
     });
 
     if (!invoice) return { success: false, message: "Invoice not found" };
+
+    // Mapping Data
     const pdfData: InvoiceData = {
       invoiceNumber: invoice.invoiceNumber,
       issueDate: invoice.issueDate,
@@ -57,7 +59,6 @@ export async function generateAndSavePDF(invoiceId: string) {
     };
 
     const stream = await renderToStream(<InvoicePDF data={pdfData} />);
-
     const chunks: Uint8Array[] = [];
 
     for await (const chunk of stream) {
@@ -65,10 +66,9 @@ export async function generateAndSavePDF(invoiceId: string) {
     }
 
     const buffer = Buffer.concat(chunks);
-
     const fileName = `${invoice.invoiceNumber}-${Date.now()}.pdf`;
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from("invoices")
       .upload(fileName, buffer, {
         contentType: "application/pdf",
@@ -80,12 +80,14 @@ export async function generateAndSavePDF(invoiceId: string) {
     const { data: publicUrlData } = supabase.storage
       .from("invoices")
       .getPublicUrl(fileName);
+    const newStatus = invoice.status === "DRAFT" ? "PENDING" : undefined;
 
     await prisma.invoice.update({
       where: { id: invoiceId },
       data: {
         pdfUrl: publicUrlData.publicUrl,
-        status: "PENDING",
+        // Update status hanya jika diperlukan
+        ...(newStatus && { status: newStatus }),
       },
     });
 
