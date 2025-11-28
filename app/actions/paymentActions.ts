@@ -42,7 +42,7 @@ export async function createPaymentToken(invoiceId: string) {
 
   const parameter = {
     transaction_details: {
-      order_id: `${invoice.invoiceNumber}-${invoice.id}`, 
+      order_id: `${invoice.invoiceNumber}_${invoice.id}`, 
       gross_amount: invoice.totalAmount,
     },
     customer_details: {

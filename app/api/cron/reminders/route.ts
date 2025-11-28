@@ -67,10 +67,7 @@ export async function GET(request: Request) {
                 customerName: inv.customer.name,
                 invoiceNumber: inv.invoiceNumber,
                 dueDate: inv.dueDate.toLocaleDateString("id-ID"),
-                totalAmount: new Intl.NumberFormat("id-ID", { 
-                    style: "currency", 
-                    currency: "IDR" 
-                }).format(Number(inv.totalAmount)), 
+                totalAmount: new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(Number(inv.totalAmount)), 
                 
                 pdfUrl: inv.pdfUrl || "",
                 sender: { 

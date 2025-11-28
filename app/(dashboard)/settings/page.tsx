@@ -24,6 +24,8 @@ export default async function SettingsPage() {
         taxId={user.businessProfile?.taxId || ""}
         defaultTaxRate={user.businessProfile?.invoiceTaxRate || 0}
         logoUrl={user.businessProfile?.logoUrl || null}
+        paymentClientKey={user.businessProfile?.paymentClientKey || ""}
+        paymentServerKey={user.businessProfile?.paymentServerKey || ""}
       />
     </div>
   );

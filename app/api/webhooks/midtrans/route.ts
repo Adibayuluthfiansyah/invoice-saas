@@ -10,26 +10,22 @@ const resend = new Resend(process.env.RESEND_API_KEY!);
 export async function POST(request: Request) {
   try {
     const json = await request.json();
-    
-    console.log("Webhook Received:", json.transaction_status, json.order_id);
-
     const status_code = json.status_code;
     const gross_amount = json.gross_amount;
     const order_id = json.order_id;
     const signature_key = json.signature_key;
     const transaction_status = json.transaction_status;
     const fraud_status = json.fraud_status;
-    
-    const parts = order_id.split("-");
+    const parts = order_id.split("_");
     const invoiceId = parts[parts.length - 1]; 
 
+    // Cek invoice di database
     const invoice = await prisma.invoice.findUnique({
         where: { id: invoiceId },
         include: { user: { include: { businessProfile: true } } }
     });
 
     if (!invoice) return NextResponse.json({ message: "Invoice not found" }, { status: 404 });
-
     const serverKey = invoice.user.businessProfile?.paymentServerKey;
     if (!serverKey) return NextResponse.json({ message: "Server Key missing" }, { status: 500 });
 
@@ -39,8 +35,12 @@ export async function POST(request: Request) {
       .digest('hex');
 
     if (hash !== signature_key) return NextResponse.json({ message: "Invalid Signature" }, { status: 403 });
+    const paidAmount = Math.floor(Number(gross_amount)); 
+    if (paidAmount !== invoice.totalAmount) {
+        return NextResponse.json({ message: "Invalid amount paid" }, { status: 400 });
+    }
 
-    // --- TENTUKAN STATUS  ---
+    // --- TENTUKAN STATUS ---
     let newStatus: InvoiceStatus | null = null;
 
     if (transaction_status == 'capture') {
@@ -54,15 +54,16 @@ export async function POST(request: Request) {
         newStatus = 'PENDING';
     }
 
-    // --- UPDATE DATABASE & KIRIM EMAIL ---
+    // ---  UPDATE DATABASE & KIRIM EMAIL ---
     if (newStatus && newStatus !== invoice.status) {
+        if (invoice.status === 'PAID') {
+            return NextResponse.json({ ok: true, message: "Already PAID" });
+        }
         await prisma.invoice.update({
             where: { id: invoiceId },
             data: { status: newStatus }
         });
-        // Kirim Email HANYA jika status berubah jadi PAID
         if (newStatus === 'PAID') {
-             // Ambil data termasuk customer
              const invoiceData = await prisma.invoice.findUnique({
                  where: { id: invoiceId },
                  include: { customer: true }
@@ -80,7 +81,7 @@ export async function POST(request: Request) {
                          paymentDate: new Date().toLocaleDateString("id-ID"),
                      })
                  });
-                 console.log("📧 Email sukses bayar dikirim ke:", invoiceData.customer.email);
+                 console.log("Email sukses bayar dikirim ke:", invoiceData.customer.email);
              }
         }
     }
@@ -88,7 +89,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
 
   } catch (error) {
-      console.error(" Webhook Error:", error);
+      console.error("Webhook Error:", error);
       return NextResponse.json({ message: "Error processing" }, { status: 500 });
   }
 }
