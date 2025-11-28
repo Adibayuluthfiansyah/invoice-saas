@@ -35,7 +35,8 @@ export async function createPaymentToken(invoiceId: string) {
 
   //  Inisialisasi Midtrans dengan Key DINAMIS milik User
   const snap = new midtransClient.Snap({
-    isProduction: false, // Nanti bisa settings tambah opsi "Mode Production" (Boolean)
+    // production
+    isProduction: process.env.NODE_ENV === "production", 
     serverKey: serverKey,
     clientKey: clientKey,
   });
