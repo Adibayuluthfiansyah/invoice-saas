@@ -5,6 +5,8 @@ import { Resend } from "resend";
 import { InvoiceStatus } from "@prisma/client";
 import { SuccessPaymentEmail } from "@/components/email/SuccessPaymentEmail"; 
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 const resend = new Resend(process.env.RESEND_API_KEY!);
 
 export async function POST(request: Request) {
