@@ -14,87 +14,102 @@ async function getDashboardData(userId: string) {
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-  const [
-    paidInvoices,
-    pendingInvoices,
-    totalInvoices,
-    totalCustomers,
-    recentInvoices,
-    user,
-    monthlyRevenueRaw,
-  ] = await Promise.all([
-    prisma.invoice.aggregate({
-      where: { userId, status: "PAID" },
-      _sum: { totalAmount: true },
-    }),
-    prisma.invoice.count({
-      where: { userId, status: "PENDING" },
-    }),
-    prisma.invoice.count({
-      where: { userId },
-    }),
-    prisma.customer.count({
-      where: { userId },
-    }),
-    prisma.invoice.findMany({
-      where: { userId },
-      include: { customer: true },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    }),
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        name: true,
-        businessProfile: { select: { companyName: true } },
-      },
-    }),
-    prisma.invoice.findMany({
-      where: {
-        userId,
-        status: "PAID",
-        issueDate: { gte: sixMonthsAgo },
-      },
-      select: {
-        issueDate: true,
-        totalAmount: true,
-      },
-      orderBy: { issueDate: "asc" },
-    }),
-  ]);
+  try {
+    const [paidInvoices, pendingInvoices, totalInvoices, totalCustomers] =
+      await Promise.all([
+        prisma.invoice.aggregate({
+          where: { userId, status: "PAID" },
+          _sum: { totalAmount: true },
+        }),
+        prisma.invoice.count({
+          where: { userId, status: "PENDING" },
+        }),
+        prisma.invoice.count({
+          where: { userId },
+        }),
+        prisma.customer.count({
+          where: { userId },
+        }),
+      ]);
 
-  const chartMap = new Map<string, number>();
+    const [recentInvoices, user, monthlyRevenueRaw] = await Promise.all([
+      prisma.invoice.findMany({
+        where: { userId },
+        include: { customer: true },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          name: true,
+          businessProfile: { select: { companyName: true } },
+        },
+      }),
+      prisma.invoice.findMany({
+        where: {
+          userId,
+          status: "PAID",
+          issueDate: { gte: sixMonthsAgo },
+        },
+        select: {
+          issueDate: true,
+          totalAmount: true,
+        },
+        orderBy: { issueDate: "asc" },
+      }),
+    ]);
 
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date();
-    d.setMonth(d.getMonth() - i);
-    const monthName = d.toLocaleString("default", { month: "short" });
-    chartMap.set(monthName, 0);
-  }
+    const chartMap = new Map<string, number>();
 
-  monthlyRevenueRaw.forEach((inv) => {
-    const monthName = inv.issueDate.toLocaleString("default", {
-      month: "short",
-    });
-    if (chartMap.has(monthName)) {
-      chartMap.set(monthName, (chartMap.get(monthName) || 0) + inv.totalAmount);
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const monthName = d.toLocaleString("default", { month: "short" });
+      chartMap.set(monthName, 0);
     }
-  });
 
-  const chartData = Array.from(chartMap, ([name, total]) => ({ name, total }));
+    monthlyRevenueRaw.forEach((inv) => {
+      const monthName = inv.issueDate.toLocaleString("default", {
+        month: "short",
+      });
+      if (chartMap.has(monthName)) {
+        chartMap.set(
+          monthName,
+          (chartMap.get(monthName) || 0) + inv.totalAmount
+        );
+      }
+    });
 
-  const displayName =
-    user?.businessProfile?.companyName || user?.name || "User";
+    const chartData = Array.from(chartMap, ([name, total]) => ({
+      name,
+      total,
+    }));
 
-  return {
-    revenue: paidInvoices._sum.totalAmount || 0,
-    pendingCount: pendingInvoices,
-    invoiceCount: totalInvoices,
-    customerCount: totalCustomers,
-    recentActivity: recentInvoices,
-    displayName: displayName,
-    chartData: chartData,
-  };
+    const displayName =
+      user?.businessProfile?.companyName || user?.name || "User";
+
+    return {
+      revenue: paidInvoices._sum.totalAmount || 0,
+      pendingCount: pendingInvoices,
+      invoiceCount: totalInvoices,
+      customerCount: totalCustomers,
+      recentActivity: recentInvoices,
+      displayName: displayName,
+      chartData: chartData,
+    };
+  } catch (error) {
+    console.error("Dashboard data fetch error:", error);
+    return {
+      revenue: 0,
+      pendingCount: 0,
+      invoiceCount: 0,
+      customerCount: 0,
+      recentActivity: [],
+      displayName: "User",
+      chartData: [],
+    };
+  }
 }
 
 export default async function DashboardPage() {

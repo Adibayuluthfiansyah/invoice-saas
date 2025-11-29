@@ -8,8 +8,6 @@ COPY package.json package-lock.json ./
 COPY prisma ./prisma/
 
 RUN npm ci
-
-
 RUN npx prisma generate
 
 # ==== Build Stage =====
@@ -19,29 +17,31 @@ WORKDIR /app
 RUN apk add --no-cache libc6-compat openssl python3 make g++
 
 
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ARG NEXT_PUBLIC_APP_URL
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/prisma ./prisma
 
-
 COPY . .
 
-
 RUN npx prisma generate
-
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 ENV SKIP_ENV_VALIDATION=1
 
-# Dummy values untuk build 
+# Dummy values untuk server-side 
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 ENV DATABASE_DIRECT_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 ENV RESEND_API_KEY="re_dummy"
-ENV NEXT_PUBLIC_SUPABASE_URL="https://dummy.supabase.co"
-ENV NEXT_PUBLIC_SUPABASE_ANON_KEY="dummy"
-ENV NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ENV CRON_SECRET="dummy"
 
+
+ENV NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 
 RUN npm run build
 
@@ -59,7 +59,6 @@ ENV HOSTNAME="0.0.0.0"
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
@@ -75,4 +74,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:3000/api/health || exit 1
 
-CMD ["node", "server.js"]
+CMD ["node", "--max-old-space-size=512", "server.js"]
