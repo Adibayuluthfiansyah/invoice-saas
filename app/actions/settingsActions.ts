@@ -4,14 +4,18 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { settingsSchema } from "@/lib/zodSchemas";
 import { revalidatePath } from "next/cache";
-import { SubmissionState } from "@/app/actions/CreateInvoice"; 
 import { supabase } from "@/lib/supabase";
 
+type ActionResult = {
+  status: "idle" | "success" | "error";
+  message: string;
+  errors?: Record<string, string[]>;
+};
+
 export async function updateBusinessProfile(
-  prevState: SubmissionState, 
+  prevState: ActionResult,
   formData: FormData
-): Promise<SubmissionState> { 
-  
+): Promise<ActionResult> {
   const session = await getSession();
   if (!session?.userId) {
     return { status: "error", message: "Unauthorized" };
@@ -36,9 +40,7 @@ export async function updateBusinessProfile(
     };
   }
 
- 
   const logoFile = formData.get("logo") as File;
-  
   let logoUrlPath: string | null = null;
 
   if (logoFile && logoFile.size > 0) {
@@ -48,7 +50,7 @@ export async function updateBusinessProfile(
         message: "File logo harus berupa gambar.",
       };
     }
-    
+
     if (logoFile.size > 2 * 1024 * 1024) {
       return {
         status: "error",
@@ -57,11 +59,13 @@ export async function updateBusinessProfile(
     }
 
     try {
-      const fileName = `logo-${session.userId}-${Date.now()}.${logoFile.name.split(".").pop()}`;
+      const fileName = `logo-${session.userId}-${Date.now()}.${
+        logoFile.name.split(".").pop()
+      }`;
       const arrayBuffer = await logoFile.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
-      const { error: uploadError } = await supabase.storage  
+      const { error: uploadError } = await supabase.storage
         .from("logos")
         .upload(fileName, buffer, {
           contentType: logoFile.type,
@@ -73,9 +77,8 @@ export async function updateBusinessProfile(
       const { data: publicUrlData } = supabase.storage
         .from("logos")
         .getPublicUrl(fileName);
-        
+
       logoUrlPath = publicUrlData.publicUrl;
-      
     } catch (error) {
       console.error("Upload Error:", error);
       return { status: "error", message: "Gagal mengupload logo." };
@@ -104,15 +107,18 @@ export async function updateBusinessProfile(
         invoiceTaxRate: validated.data.invoiceTaxRate,
         paymentClientKey: validated.data.paymentClientKey,
         paymentServerKey: validated.data.paymentServerKey,
-        logoUrl: logoUrlPath || null, 
+        logoUrl: logoUrlPath || null,
       },
     });
 
     revalidatePath("/dashboard");
     revalidatePath("/invoices");
-    revalidatePath("/settings"); 
-    
-    return { status: "success", message: "Profil bisnis dan logo berhasil disimpan!" };
+    revalidatePath("/settings");
+
+    return {
+      status: "success",
+      message: "Profil bisnis berhasil disimpan!",
+    };
   } catch (error) {
     console.error("Database Error:", error);
     return { status: "error", message: "Gagal menyimpan data." };
