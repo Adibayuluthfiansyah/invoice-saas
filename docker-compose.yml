@@ -6,16 +6,14 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_SUPABASE_URL: https://hhpivhusxadynfuokals.supabase.co
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhocGl2aHVzeGFkeW5mdW9rYWxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2NTA3NTMsImV4cCI6MjA3OTIyNjc1M30.dUZwinoQpZxOQ2d6AtOGRAr4J_uSNRwH5_calfu0uJw
-        NEXT_PUBLIC_APP_URL: http://localhost:3000
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - DATABASE_DIRECT_URL=${DATABASE_DIRECT_URL}
-      - RESEND_API_KEY=${RESEND_API_KEY}
-      - CRON_SECRET=${CRON_SECRET}
       - NODE_ENV=production
       - PORT=3000
       - HOSTNAME=0.0.0.0

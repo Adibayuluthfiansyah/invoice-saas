@@ -5,6 +5,7 @@ import { getSession } from "@/lib/session";
 import { invoiceSchema } from "@/lib/zodSchemas";
 import { redirect } from "next/navigation";
 import { InvoiceStatus } from "@prisma/client"; 
+import { getDateString } from "@/lib/utils"; 
 
 export type SubmissionState = {
   status: "success" | "error";
@@ -32,6 +33,7 @@ export async function createInvoice(
     quantity: Number(quantities[index]),
     rate: Number(rates[index]),
   }));
+
   let subTotal = 0;
   items.forEach((item) => {
     subTotal += item.quantity * item.rate;
@@ -67,6 +69,7 @@ export async function createInvoice(
   }
 
   const data = validatedData.data;
+  const finalInvoiceNumber = `${data.invoiceName}-${getDateString()}`;
 
   try {
     let customer = await prisma.customer.findFirst({
@@ -87,9 +90,10 @@ export async function createInvoice(
       });
     }
 
+    // Simpan Invoice dengan Nomor yang Sudah Dimodifikasi
     await prisma.invoice.create({
       data: {
-        invoiceNumber: data.invoiceName,
+        invoiceNumber: finalInvoiceNumber,
         issueDate: data.date,
         dueDate: new Date(
           data.date.getTime() + data.dueDate * 24 * 60 * 60 * 1000
@@ -114,7 +118,7 @@ export async function createInvoice(
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Database Error:", error);
     return { status: "error", message: "Gagal menyimpan invoice ke database." };
   }
 

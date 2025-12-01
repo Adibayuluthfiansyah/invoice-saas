@@ -9,7 +9,7 @@ datasource db {
   directUrl = env("DATABASE_DIRECT_URL")
 }
 
-//  Model User (Pemilik akun SaaS)
+//  Model User (Pemilik akun invoice)
 model User {
   id               String    @id @default(cuid())
   email            String    @unique
@@ -27,15 +27,15 @@ model User {
 
 // Model BusinessProfile (Data untuk Kop Surat/Header Invoice)
 model BusinessProfile {
-  id               String  @id @default(cuid())
-  companyName      String
-  address          String?
-  logoUrl          String? // URL logo di S3/Cloudinary
-  taxId            String? // NPWP 
-  invoiceTaxRate   Float   @default(0)
-  userId           String  @unique
-  user             User    @relation(fields: [userId], references: [id])
-  // --- Key Pembayaran User Midtrans ---
+  id             String  @id @default(cuid())
+  companyName    String
+  address        String?
+  logoUrl        String? // URL logo perusahaan
+  taxId          String? // NPWP 
+  invoiceTaxRate Float   @default(0)
+  userId         String  @unique
+  user           User    @relation(fields: [userId], references: [id])
+
   paymentClientKey String? // Untuk frontend 
   paymentServerKey String? // Untuk backend 
 }
@@ -55,22 +55,23 @@ model Customer {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([email, userId])
 }
 
-// Model Invoice (Dokumen Tagihan)
+// Model Invoice 
 model Invoice {
   id            String   @id @default(cuid())
   invoiceNumber String
   issueDate     DateTime @default(now())
   dueDate       DateTime
 
-  // Jangan pakai string "lunas"/"belum", tapi pakai ENUM strict.
   status InvoiceStatus @default(DRAFT)
 
-  subTotal    Int   @default(0) // Total sebelum pajak
-  taxRate     Float @default(0) // Persentase pajak (misal 11.0)
-  taxAmount   Int   @default(0) // Nilai pajak dalam Rupiah
-  totalAmount Int   @default(0) // Grand Total (Subtotal + Tax)
+  subTotal    Int   @default(0)
+  taxRate     Float @default(0)
+  taxAmount   Int   @default(0)
+  totalAmount Int   @default(0)
 
   pdfUrl String?
 
@@ -84,6 +85,8 @@ model Invoice {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([invoiceNumber, userId])
 }
 
 //  Model InvoiceItem (Baris Barang/Jasa)
@@ -91,7 +94,7 @@ model InvoiceItem {
   id          String @id @default(cuid())
   description String
   quantity    Int    @default(1)
-  unitPrice   Int // Harga per satuan
+  unitPrice   Int
 
   invoiceId String
   invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
