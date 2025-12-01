@@ -54,7 +54,6 @@ export async function GET(request: Request) {
 
         // SAFETY CHECK
         if (!profile) {
-            console.log(`Skip Invoice #${inv.invoiceNumber}: User tidak punya Business Profile.`);
             continue; 
         }
 

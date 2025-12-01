@@ -42,28 +42,13 @@ export async function createPaymentToken(invoiceId: string) {
 
   const serverKey = rawServerKey.trim();
   const clientKey = rawClientKey.trim();
-
-  const isSandbox = true;
-
-
-// === INI UNTUK PRODUCTION ===
-  // const isSandbox = serverKey.startsWith("SB-");
-
-  // LOG midtrans issue
-  console.log("--- DEBUG MIDTRANS ---");
-  console.log(`Key dipakai: ${serverKey.substring(0, 6)}...`);
-  console.log(`Mode terdeteksi: ${isSandbox ? "SANDBOX (Testing)" : "PRODUCTION (Live)"}`);
   
-  if (!isSandbox) {
-    console.warn("PERINGATAN: Anda menggunakan Key Production (Mid-...) di environment yang mungkin masih Development.");
-  }
-
-
+  // === LOGIC SMART PRODUCTION DETECTION ===
+  // Jika Key diawali "SB-", otomatis anggap Sandbox.
+  // Jika tidak, otomatis anggap Production.
+  const isSandbox = serverKey.startsWith("SB-");
   const snap = new midtransClient.Snap({
-// === INI UNTUK PRODUCTION ===
-//isProduction: !isSandbox,
-
-    isProduction: false, 
+    isProduction: !isSandbox, // True jika bukan Sandbox
     serverKey: serverKey,
     clientKey: clientKey,
   });

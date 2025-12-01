@@ -8,15 +8,11 @@ import { SuccessPaymentEmail } from "@/components/email/SuccessPaymentEmail";
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-
 const resend = new Resend(process.env.RESEND_API_KEY!);
 
 export async function POST(request: Request) {
   try {
     const json = await request.json();
-    
-    console.log("Midtrans Webhook Received:", json.order_id, json.transaction_status);
-
     const status_code = json.status_code;
     const gross_amount = json.gross_amount;
     const order_id = json.order_id;
@@ -82,26 +78,20 @@ export async function POST(request: Request) {
              });
 
              if (invoiceData?.customer.email) {
-                 // --- LOGIC TEST SEND EMAIL ---
-                // Kalau sudah production hapus email developer
-                 // Production Pakai domain asli 
-                //const senderEmail = "7ONG Invoice <billing@o7ong.me>";
-
-                 const senderEmail = "7ONG Invoice <onboarding@resend.dev>"; 
-                 const isDevelopment = process.env.NODE_ENV !== "production";
-                 const developerEmail = "adibayuluthfiansyah@gmail.com"; 
-                 const recipientEmail = (isDevelopment) 
-                    ? developerEmail 
-                    : invoiceData.customer.email;
+                // --- SETUP EMAIL PRODUCTION ---
                 
-                    // === INI UNTUK PRODUCTION ===
-                // const recipientEmail = isDevelopment 
-                //     ? "adibayuluthfiansyah@gmail.com" 
-                //     : invoiceData.customer.email;
+                // Gunakan Env Variable untuk Sender Email agar fleksibel
+                // Default fallback jika env belum diset
+                const senderEmail = process.env.SENDER_EMAIL || "7ONG Invoice <billing@o7ong.me>";
+
+                const isDevelopment = process.env.NODE_ENV !== "production";
+                
+                // Di Production, kirim ke customer asli. Di Dev, kirim ke developer.
+                const recipientEmail = isDevelopment 
+                    ? "adibayuluthfiansyah@gmail.com" 
+                    : invoiceData.customer.email;
 
                 const emailSubject = `Pembayaran Diterima: ${invoiceData.invoiceNumber}`;
-
-                console.log(` Mencoba kirim email webhook ke: ${recipientEmail} dari ${senderEmail}`);
 
                  try {
                      const { data, error } = await resend.emails.send({
@@ -117,10 +107,8 @@ export async function POST(request: Request) {
                      });
 
                      if (error) {
-                         console.error(" Resend Error (Webhook):", error);
-                     } else {
-                         console.log(` Email sukses bayar TERKIRIM ke: ${recipientEmail} (ID: ${data?.id})`);
-                     }
+                         console.error("Resend Error (Webhook):", error);
+                     } 
                  } catch (emailErr) {
                      console.error("Exception kirim email webhook:", emailErr);
                  }

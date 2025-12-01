@@ -4,7 +4,6 @@ import { hash } from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Memulai proses seeding...');
 
   const hashedPassword = await hash('password123', 10);
   
@@ -30,7 +29,6 @@ async function main() {
     },
   });
 
-  console.log('User created:', user.email);
 
   const customer = await prisma.customer.create({
     data: {
@@ -56,8 +54,6 @@ async function main() {
       }
     }
   });
-
-  console.log('Seeding selesai!');
 }
 
 main()

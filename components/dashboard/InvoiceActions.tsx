@@ -60,11 +60,11 @@ export function InvoiceActions({
 
     if (result.success) {
       toast.success("Invoice berhasil dihapus", { id: toastId });
-      setIsDeleteOpen(false); // Tutup dialog
+      setIsDeleteOpen(false);
       router.push("/invoices");
     } else {
       toast.error(result.message, { id: toastId });
-      setIsDeleting(false); // Stop loading jika gagal
+      setIsDeleting(false);
     }
   };
 
@@ -109,10 +109,9 @@ export function InvoiceActions({
               </Link>
             </DropdownMenuItem>
 
-            {/* Saat diklik, buka Dialog (jangan langsung hapus) */}
             <DropdownMenuItem
               onSelect={(e) => {
-                e.preventDefault(); // Mencegah dropdown menutup otomatis yang bisa mengganggu dialog
+                e.preventDefault();
                 setIsDeleteOpen(true);
               }}
               className="text-red-600 focus:text-red-600 cursor-pointer"

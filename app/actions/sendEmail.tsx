@@ -41,19 +41,22 @@ export async function sendInvoiceEmail(invoiceId: string) {
     const senderProfile = invoice.user.businessProfile;
     const isDevelopment = process.env.NODE_ENV !== "production";
 
+    // Logic Production: Kirim ke customer
+    // Logic Develop: Kirim ke developer
     const recipientEmail = isDevelopment
       ? ["adibayuluthfiansyah@gmail.com"]
       : [customerEmail];
 
     const emailSubject = isDevelopment
-      ? `[TEST - For: ${customerEmail}] Tagihan Baru #${invoice.invoiceNumber}`
+      ? `[DEV TEST For: ${customerEmail}] Tagihan Baru #${invoice.invoiceNumber}`
       : `Tagihan Baru #${invoice.invoiceNumber}`;
 
-    console.log(`📧 Sending invoice email to: ${recipientEmail[0]}`);
+    const senderEmailAddress =
+      process.env.SENDER_EMAIL || "7ONG Invoice <noreply@o7ong.me>";
 
     // Kirim Email
     const { data, error } = await resend.emails.send({
-      from: "7ONG Invoice <onboarding@resend.dev>",
+      from: senderEmailAddress,
       to: recipientEmail,
       subject: emailSubject,
       react: (
@@ -82,8 +85,6 @@ export async function sendInvoiceEmail(invoiceId: string) {
       };
     }
 
-    console.log(`✅ Email sent successfully. ID: ${data?.id}`);
-
     // Update status jika masih DRAFT
     if (invoice.status === "DRAFT") {
       await prisma.invoice.update({
@@ -93,7 +94,7 @@ export async function sendInvoiceEmail(invoiceId: string) {
     }
 
     const successMessage = isDevelopment
-      ? `Email test dikirim ke ${recipientEmail[0]}! (Production: ${customerEmail})`
+      ? `Email test dikirim ke ${recipientEmail[0]}! (Production akan ke: ${customerEmail})`
       : `Email berhasil dikirim ke ${customerEmail}!`;
 
     return {
