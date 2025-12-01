@@ -13,7 +13,7 @@ export async function sendInvoiceEmail(invoiceId: string) {
   if (!session?.userId) return { success: false, message: "Unauthorized" };
 
   try {
-    //  Ambil Data
+    // get data invoice
     const invoice = await prisma.invoice.findUnique({
       where: { id: invoiceId, userId: session.userId as string },
       include: {
@@ -33,20 +33,29 @@ export async function sendInvoiceEmail(invoiceId: string) {
       };
     }
 
+    const customerEmail = invoice.customer.email.trim();
+    if (!customerEmail || !customerEmail.includes("@")) {
+      return { success: false, message: "Email customer tidak valid" };
+    }
+
     const senderProfile = invoice.user.businessProfile;
+    const isDevelopment = process.env.NODE_ENV !== "production";
+
+    const recipientEmail = isDevelopment
+      ? ["adibayuluthfiansyah@gmail.com"]
+      : [customerEmail];
+
+    const emailSubject = isDevelopment
+      ? `[TEST - For: ${customerEmail}] Tagihan Baru #${invoice.invoiceNumber}`
+      : `Tagihan Baru #${invoice.invoiceNumber}`;
+
+    console.log(`📧 Sending invoice email to: ${recipientEmail[0]}`);
 
     // Kirim Email
-    const { error } = await resend.emails.send({
-      // Ganti dengan domain Anda yang sudah verified
-      from: "7ONG Invoice <billing@o7ong.me>",
-
-      // Production kirim ke Klien, kalau Dev kirim ke Anda
-      to:
-        process.env.NODE_ENV === "production"
-          ? [invoice.customer.email]
-          : ["adibayuluthfiansyah@gmail.com"],
-
-      subject: `Tagihan Baru #${invoice.invoiceNumber}`,
+    const { data, error } = await resend.emails.send({
+      from: "7ONG Invoice <onboarding@resend.dev>",
+      to: recipientEmail,
+      subject: emailSubject,
       react: (
         <InvoiceEmail
           customerName={invoice.customer.name}
@@ -56,7 +65,7 @@ export async function sendInvoiceEmail(invoiceId: string) {
           dueDate={formatDate(invoice.dueDate)}
           invoiceId={invoice.id}
           sender={{
-            name: senderProfile?.companyName || "7ONG User",
+            name: senderProfile?.companyName || "7ONG Invoice",
             address: senderProfile?.address || "",
             taxId: senderProfile?.taxId || "",
             logoUrl: senderProfile?.logoUrl || null,
@@ -69,11 +78,13 @@ export async function sendInvoiceEmail(invoiceId: string) {
       console.error("Resend Error:", error);
       return {
         success: false,
-        message: "Gagal mengirim email: " + error.message,
+        message: `Gagal mengirim email: ${error.message}`,
       };
     }
 
-    // Update status masih draft
+    console.log(`✅ Email sent successfully. ID: ${data?.id}`);
+
+    // Update status jika masih DRAFT
     if (invoice.status === "DRAFT") {
       await prisma.invoice.update({
         where: { id: invoice.id },
@@ -81,9 +92,21 @@ export async function sendInvoiceEmail(invoiceId: string) {
       });
     }
 
-    return { success: true, message: "Email berhasil dikirim!" };
+    const successMessage = isDevelopment
+      ? `Email test dikirim ke ${recipientEmail[0]}! (Production: ${customerEmail})`
+      : `Email berhasil dikirim ke ${customerEmail}!`;
+
+    return {
+      success: true,
+      message: successMessage,
+      emailId: data?.id,
+    };
   } catch (error) {
-    console.error("Server Error:", error);
-    return { success: false, message: "Terjadi kesalahan server" };
+    console.error("Send Email Error:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Terjadi kesalahan server",
+    };
   }
 }

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import midtransClient from "midtrans-client";
 
 export async function createPaymentToken(invoiceId: string) {
-  //  Ambil Invoice DAN Business Profile Pemiliknya
+  //  get invoice data
   const invoice = await prisma.invoice.findUnique({
     where: { id: invoiceId },
     include: {
@@ -33,10 +33,10 @@ export async function createPaymentToken(invoiceId: string) {
     };
   }
 
-  //  Inisialisasi Midtrans dengan Key DINAMIS milik User
+  const isSandbox = serverKey.startsWith("SB-Mid-");
+
   const snap = new midtransClient.Snap({
-    // production
-    isProduction: process.env.NODE_ENV === "production", 
+    isProduction: process.env.NODE_ENV === "production" && !isSandbox,
     serverKey: serverKey,
     clientKey: clientKey,
   });
@@ -54,9 +54,17 @@ export async function createPaymentToken(invoiceId: string) {
 
   try {
     const token = await snap.createTransactionToken(parameter);
-    return { success: true, token: token, clientKey: clientKey }; 
+    return { 
+      success: true, 
+      token: token, 
+      clientKey: clientKey,
+      isSandbox: isSandbox 
+    }; 
   } catch (error) {
     console.error("Midtrans Error:", error);
-    return { success: false, message: "Gagal membuat token pembayaran (Cek Server Key)." };
+    return { 
+      success: false, 
+      message: "Gagal membuat token pembayaran (Cek Server Key)." 
+    };
   }
 }

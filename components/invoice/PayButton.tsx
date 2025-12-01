@@ -13,11 +13,6 @@ interface PayButtonProps {
 
 export function PayButton({ invoiceId, status }: PayButtonProps) {
   const [loading, setLoading] = useState(false);
-
-  // Load Script Midtrans secara dinamis saat komponen dipasang
-  // Tapi karena Client Key berubah-ubah, kita tidak bisa pasang di awal.
-  // Kita akan gunakan window.snap nanti.
-
   if (status === "PAID") {
     return (
       <Button
@@ -33,7 +28,7 @@ export function PayButton({ invoiceId, status }: PayButtonProps) {
   const handlePay = async () => {
     setLoading(true);
 
-    // Minta Token & Client Key ke Server
+    // get token
     const result = await createPaymentToken(invoiceId);
 
     if (!result.success || !result.token || !result.clientKey) {
@@ -42,29 +37,26 @@ export function PayButton({ invoiceId, status }: PayButtonProps) {
       return;
     }
 
-    // Inject Script Midtrans secara manual dengan Client Key yang didapat
     const scriptId = "midtrans-script";
     let script = document.getElementById(scriptId) as HTMLScriptElement;
 
     if (!script) {
       script = document.createElement("script");
       script.id = scriptId;
-      script.src = "https://app.sandbox.midtrans.com/snap/snap.js";
+      script.src = result.isSandbox
+        ? "https://app.sandbox.midtrans.com/snap/snap.js"
+        : "https://app.midtrans.com/snap/snap.js";
       script.setAttribute("data-client-key", result.clientKey);
       document.body.appendChild(script);
 
-      // Tunggu script load sebentar
       await new Promise((resolve) => {
         script.onload = resolve;
-        // Fallback delay jika onload tidak trigger
         setTimeout(resolve, 1000);
       });
     } else {
-      // Jika script sudah ada tapi client key beda (jarang terjadi di page refresh), update atribut
       script.setAttribute("data-client-key", result.clientKey);
     }
 
-    //  Panggil Snap
     // @ts-expect-error: Snap global
     if (window.snap) {
       // @ts-expect-error: Snap global

@@ -136,9 +136,21 @@ export function SettingsForm(props: SettingsFormProps) {
       </div>
 
       {/* Payment Keys */}
+      <div className="space-y-4 rounded-lg border p-6 bg-primary/5 dark:bg-primary/10">
+        <div className="space-y-2">
+          <h2 className="text-xl font-bold text-foreground">
+            Integrasi Pembayaran Midtrans
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Hubungkan akun Midtrans Anda untuk menerima pembayaran online dari
+            customer dan kelola transaksi anda sendiri melalui dashboard
+            Midtrans.
+          </p>
+        </div>
+      </div>
+
       <div className="space-y-4 rounded-lg border p-6">
         <h2 className="text-lg font-semibold">Midtrans Payment Keys</h2>
-
         <div className="space-y-2">
           <Label htmlFor="paymentClientKey">Client Key</Label>
           <Input
